@@ -1,5 +1,6 @@
 ﻿using CleanArchitecture.Application.Exceptions;
 using CleanArchitecture.WebApi.Models;
+using FluentValidation;
 using System.Text.Json;
 
 namespace CleanArchitecture.WebApi.Middleware
@@ -43,6 +44,15 @@ namespace CleanArchitecture.WebApi.Middleware
                 case BusinessException businessException:
                     statusCode = StatusCodes.Status400BadRequest;
                     message = businessException.Message;
+                    break;
+                case ValidationException:
+                    statusCode = StatusCodes.Status400BadRequest;
+                    message = string.Join(
+                        " ",
+                        ((ValidationException)exception)
+                            .Errors
+                            .Select(e => e.ErrorMessage)
+                    );
                     break;
                 default:
                     statusCode = StatusCodes.Status500InternalServerError;

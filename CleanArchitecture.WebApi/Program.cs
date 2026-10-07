@@ -2,20 +2,29 @@ using CleanArchitecture.Application.Interfaces;
 using CleanArchitecture.Application.Interfaces.IRepositories;
 using CleanArchitecture.Application.Interfaces.IServices;
 using CleanArchitecture.Application.Services;
+using CleanArchitecture.Application.Validators;
 using CleanArchitecture.Infrastructure.Data;
 using CleanArchitecture.Infrastructure.Repositories;
 using CleanArchitecture.Infrastructure.Services;
+using CleanArchitecture.WebApi.Filters;
 using CleanArchitecture.WebApi.Middleware;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ValidationFilter>();
+});
 
 builder.Services.AddDbContext<EmployeeDBContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+//Activa todos las validaciones de FluentValidation en el ensamblado que contiene CreateEmployeeRequestValidator
+builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeRequestValidator>();
 
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
