@@ -1,6 +1,4 @@
 ﻿using CleanArchitecture.Domain.Entities;
-using System;
-using System.Collections.Generic;
 
 namespace EmployeeApi.Entities;
 

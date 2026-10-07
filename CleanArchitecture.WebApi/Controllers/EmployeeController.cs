@@ -19,11 +19,11 @@ namespace CleanArchitecture.WebApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> getAll()
+        public async Task<IActionResult> getAll([FromQuery] PaginationParams paginationParams)
         {
             string baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
-            var employees = await _employeeService.GetAllAsync(baseUrl);
-            return Ok(new ApiResponse<List<GetEmployeeResponse>>(true, 200, "Lista de empleados", employees));
+            var employees = await _employeeService.GetAllAsync(baseUrl, paginationParams);
+            return Ok(new ApiResponse<PagedList<GetEmployeeResponse>>(true, 200, "Lista de empleados", employees));
         }
 
         [HttpGet("{id}")]

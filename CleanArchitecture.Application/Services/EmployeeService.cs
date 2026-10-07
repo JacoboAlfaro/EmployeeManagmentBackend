@@ -11,18 +11,20 @@ namespace CleanArchitecture.Application.Services
     public class EmployeeService: IEmployeeService
     {
         private readonly IEmployeeRepository _repository;
+        private readonly IDepartmentService _departmentService;
         private readonly IFileStorageService _fileStorageService;
 
-        public EmployeeService(IEmployeeRepository repository, IFileStorageService fileStorageService)
+        public EmployeeService(IEmployeeRepository repository, IFileStorageService fileStorageService, IDepartmentService departmentService)
         {
             _repository = repository;
             _fileStorageService = fileStorageService;
+            _departmentService = departmentService;
         }
-        public async Task<List<GetEmployeeResponse>> GetAllAsync(string baseUrl)
+        public async Task<PagedList<GetEmployeeResponse>> GetAllAsync(string baseUrl, PaginationParams paginationParams)
         {
-            var employees = await _repository.GetAllAsync();
+            var employees = await _repository.GetAllAsync(paginationParams);
 
-            return employees
+            var employeesResponse = employees.Items
                 .Select(e => new GetEmployeeResponse(
                     e.EmployeeId,
                     e.FullName,
@@ -33,6 +35,8 @@ namespace CleanArchitecture.Application.Services
                     e.DepartmentId)
                 )
                 .ToList();
+
+            return new PagedList<GetEmployeeResponse>(employeesResponse, employees.TotalCount, employees.CurrentPage, employees.PageSize);
         }
 
         public async Task<GetEmployeeResponse?> GetByIdAsync(int id, string baseUrl)
@@ -58,13 +62,19 @@ namespace CleanArchitecture.Application.Services
         {
             string? fileName = null;
 
+            var existingEmployee = await _repository.GetByEmail(request.email);
+            if (existingEmployee != null) {
+                throw new BusinessException("Ya existe un empleado con este correo");
+            }
+
+            // Validar departamento que se usa exista.
+            await _departmentService.GetDepartmentByIdAsync(request.departmentId);
+
+
             if (image != null)
             {
                 fileName = await _fileStorageService.SaveAsync(image);
             }
-
-            var existingEmployee = await _repository.GetByEmail(request.email);
-            if (existingEmployee != null) throw new BusinessException("Ya existe un empleado con este correo");
 
             var employee = new Employee
             {
@@ -82,8 +92,18 @@ namespace CleanArchitecture.Application.Services
         public async Task UpdateAsync(int id, UpdateEmployeeRequest request, FileUpload? image)
         {
             var employee = await _repository.GetByIdAsync(id);
+            if (employee == null) {
+                throw new NotFoundException("Empleado no encontrado");
+            }
 
-            if (employee == null) throw new NotFoundException("Empleado no encontrado");
+            var existingEmployee = await _repository.GetByEmail(request.email);
+            if (existingEmployee != null && existingEmployee.EmployeeId != id)
+            {
+                throw new BusinessException("Ya existe un empleado con este correo");
+            }
+
+            // Validar departamento que se usa exista.
+            await _departmentService.GetDepartmentByIdAsync(request.departmentId);
 
             employee.FullName = request.fullName;
             employee.Email = request.email;

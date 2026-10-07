@@ -1,5 +1,7 @@
 ﻿using CleanArchitecture.Application.Interfaces.IRepositories;
+using CleanArchitecture.Application.Models;
 using CleanArchitecture.Infrastructure.Data;
+using CleanArchitecture.Infrastructure.Extensions;
 using EmployeeApi.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,12 +16,13 @@ namespace CleanArchitecture.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<List<Employee>> GetAllAsync()
+        public async Task<PagedList<Employee>> GetAllAsync(PaginationParams paginationParams)
         {
-            return await _context.Employees
+            var query = _context.Employees
                 .AsNoTracking()
-                .Include(d => d.Department)
-                .ToListAsync();
+                .Include(d => d.Department);
+
+            return await query.ToPagedListAsync(paginationParams);
         }
 
         public async Task<Employee?> GetByIdAsync(int id)

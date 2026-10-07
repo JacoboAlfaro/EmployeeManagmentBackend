@@ -1,10 +1,11 @@
-﻿using EmployeeApi.Entities;
+﻿using CleanArchitecture.Application.Models;
+using EmployeeApi.Entities;
 
 namespace CleanArchitecture.Application.Interfaces.IRepositories
 {
     public interface IEmployeeRepository
     {
-        Task<List<Employee>> GetAllAsync();
+        Task<PagedList<Employee>> GetAllAsync(PaginationParams paginationParams);
         Task<Employee?> GetByIdAsync(int id);
         Task<Employee?> GetByEmail(string email);
         Task AddAsync(Employee employee);
